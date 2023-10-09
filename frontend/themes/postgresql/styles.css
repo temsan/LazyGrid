@@ -1,0 +1,70 @@
+@import "theme-editor.css";
+@import url("./components/DialogView.css");
+
+html {
+  --lumo-primary-color: hsl(214, 72%, 50%); /* Лавандовый цвет */
+  --lumo-primary-text-color: rgb(0, 0, 0);
+  --lumo-primary-color-50pct: rgba(0, 0, 0, 0.5);
+  --lumo-primary-color-10pct: rgba(0, 0, 0, 0.1);
+}
+
+#outlet {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(243, 244, 246);
+}
+
+#outlet > *:first-child {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-layout {
+  width: 95vw !important;
+  height: 90vh !important;
+  background-color: #FFF;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.main-layout-left {
+  background-color: #000;
+}
+
+vaadin-tabs {
+  width: 100%;
+}
+
+vaadin-tab {
+  padding: 8px;
+  color: #FFF;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+vaadin-tab span {
+  padding-left: 20px;
+}
+
+vaadin-tab[selected] {
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+vaadin-grid {
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+vaadin-dialog-overlay::part(overlay) {
+  border-radius: 20px;
+}
