@@ -4,7 +4,6 @@ import com.example.application.data.entity.FileStorage;
 import com.example.application.data.entity.Products;
 import com.example.application.data.service.ProductsRepository;
 import com.example.application.layouts.MainLayout;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -16,7 +15,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import org.imgscalr.Scalr;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.data.domain.PageRequest;
 import org.vaadin.firitin.components.grid.PagingGrid;
 
@@ -44,20 +43,18 @@ public class ListProducts extends VerticalLayout {
 
         grid.addColumn(new ComponentRenderer<>(product -> {
             if (!product.getPreview().isEmpty()) {
-                return createPreviewImage(product.getPreview());
+                return createImage(product.getPreview());
             } else {
-                return new Text("No Image");
+                return createPlaceholderImage();
             }
         })).setHeader("Preview Image").setKey("previewImage");
 
         grid.addItemClickListener(item -> {
             Products model = item.getItem();
-
             Dialog dialog = new Dialog();
             dialog.setWidth("800px");
             dialog.setHeight("600px");
             PageProducts pageProducts = new PageProducts(dialog, model, service, grid);
-
             dialog.add(pageProducts);
             dialog.setCloseOnEsc(true);
             dialog.open();
@@ -67,7 +64,6 @@ public class ListProducts extends VerticalLayout {
         add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         add.addClickListener(event -> {
             Products model = new Products();
-
             Dialog dialog = new Dialog();
             dialog.setWidth("800px");
             dialog.setHeight("400px");
@@ -80,29 +76,38 @@ public class ListProducts extends VerticalLayout {
         add(title, add, grid);
     }
 
-    private Image createPreviewImage(FileStorage firstImage) {
-        if (firstImage.isEmpty()) {
-            return new Image();
-        } else {
-            byte[] imageData = firstImage.getData();
-
-            try {
-                BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(imageData));
-                BufferedImage thumbnail = Scalr.resize(originalImage, 80, 80);
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                ImageIO.write(thumbnail, getFileExtension(firstImage.getName()), outputStream);
-                byte[] previewImageData = outputStream.toByteArray();
-
-                Image imagePreview = new Image(new StreamResource("preview.jpg", () -> new ByteArrayInputStream(previewImageData)), "Preview");
-                imagePreview.setWidth("80px");
-                imagePreview.setHeight("80px");
-
-                return imagePreview;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    private Image createImage(FileStorage firstImage) {
+        byte[] imageData = firstImage.getData();
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(imageData)) {
+            BufferedImage originalImage = ImageIO.read(inputStream);
+            BufferedImage thumbnail = Thumbnails.of(originalImage)
+                    .size(80, 80)
+                    .asBufferedImage();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(thumbnail, getFileExtension(firstImage.getName()), outputStream);
+            byte[] previewImageData = outputStream.toByteArray();
+            return getImage(firstImage, previewImageData);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return createPlaceholderImage();
         }
-        return new Image();
+    }
+
+    private static Image getImage(FileStorage firstImage, byte[] previewImageData) {
+        String imageApiBaseUrl = "/api/pictures/";
+        String imageUrl = imageApiBaseUrl + firstImage.getProduct().getId(); // Используем productId в качестве части URL
+        Image imagePreview = new Image(new StreamResource("preview.jpg", () -> new ByteArrayInputStream(previewImageData)), "Preview");
+        imagePreview.setWidth("80px");
+        imagePreview.setHeight("80px");
+        imagePreview.setSrc(imageUrl + " 1x, " + imageUrl + " 2x"); // Указываем пути к изображениям разного разрешения
+        return imagePreview;
+    }
+
+    private Image createPlaceholderImage() {
+        Image placeholderImage = new Image("images/placeholder.png", "No Image");
+        placeholderImage.setWidth("80px");
+        placeholderImage.setHeight("80px");
+        return placeholderImage;
     }
 
     private static String getFileExtension(String fileName) {

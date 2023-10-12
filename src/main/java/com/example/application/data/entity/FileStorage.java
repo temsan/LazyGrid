@@ -17,6 +17,7 @@ public class FileStorage {
 
     @Lob
     private byte[] data;
+
     private Integer size;
     private String name;
 
