@@ -6,9 +6,9 @@ import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 
 @AnonymousAllowed
 @PageTitle("PageProducts")
@@ -35,16 +36,24 @@ public class PageProducts extends VerticalLayout {
     private final Products model;
     private final MemoryBuffer buffer = new MemoryBuffer();
     private final Upload imageUpload = new Upload(buffer);
-    private Image imagePreview;
+    private final Image imagePreview;
 
-    public PageProducts(Dialog dialog, Products model, ProductsRepository service, Grid<Products> grid) {
-        this.model = model;
-        H3 title = new H3(model.getName());
+    public PageProducts(Dialog dialog, Products product, ProductsRepository service, ListProducts listProducts) {
+        this.model = product;
+        H3 title = new H3(product.getName());
+
+        TextField id = new TextField("ID");
+        id.setWidth("100%");
+
         TextField name = new TextField("Name");
-        name.setWidth("100%");
+        name.setWidth("70%");
+
         TextField number = new TextField("Number");
-        number.setWidth("100%");
-        imagePreview = createImagePreview();
+        number.setWidth("30%");
+
+        HorizontalLayout nameNumber = new HorizontalLayout(name, number);
+
+        imagePreview = createImagePreview(product.getId());
         imageUpload.setAcceptedFileTypes("image/*");
         imageUpload.setMaxFiles(1);
         imageUpload.setDropAllowed(false);
@@ -52,16 +61,18 @@ public class PageProducts extends VerticalLayout {
         update.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         update.addClickListener(event -> {
             try {
-                binder.writeBean(model);
-                service.save(model);
+                binder.writeBean(product);
+                service.save(product);
                 dialog.close();
-                grid.getDataProvider().refreshAll();
+                listProducts.refreshAllGrids(model);
             } catch (ValidationException e) {
                 Dialog errorDialog = new Dialog();
                 errorDialog.add(new Text("An error occurred. Please try again later."));
                 errorDialog.open();
             }
         });
+
+        binder.forField(id).bind(products -> products.getId().toString(), null);
         binder.forField(name).bind(Products::getName, Products::setName);
         binder.forField(number).withConverter(new StringToIntegerConverter("Please enter a valid number")).bind(Products::getNumber, Products::setNumber);
         imageUpload.addSucceededListener(event -> {
@@ -69,15 +80,18 @@ public class PageProducts extends VerticalLayout {
             InputStream fileStream = buffer.getInputStream();
             uploadImage(fileName, fileStream);
         });
-        binder.readBean(model);
-        add(title, name, number, imageUpload, imagePreview, update);
+        binder.readBean(product);
+        add(title, id, nameNumber, imageUpload, imagePreview, update);
         setupDragAndDrop();
     }
 
-    private Image createImagePreview() {
+    private Image createImagePreview(UUID id) {
         Image imagePreview = new Image();
         imagePreview.setWidth("100px");
         imagePreview.setHeight("100px");
+        String imageApiBaseUrl = "/api/pictures/";
+        String imageUrl = imageApiBaseUrl + id;
+        imagePreview.setSrc(imageUrl);
         return imagePreview;
     }
 

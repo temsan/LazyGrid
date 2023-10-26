@@ -1,29 +1,22 @@
 package com.example.application.layouts;
 
+import com.example.application.views.products.ListProducts;
+import com.example.application.views.users.ListUsers;
+import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.Tag;
-
-
-
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouterLayout;
 import com.vaadin.flow.router.RouterLink;
 
 import java.util.Objects;
-import com.vaadin.flow.component.HasElement;
-
-import com.example.application.views.users.ListUsers;
-import com.example.application.views.products.ListProducts;
-
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.tabs.TabsVariant;
 
 @Tag("vaadin-horizontal-layout")
 public class MainLayout extends HorizontalLayout implements RouterLayout, BeforeEnterObserver {
@@ -92,7 +85,4 @@ public class MainLayout extends HorizontalLayout implements RouterLayout, Before
     link.setTabIndex(-1);
     return new Tab(link);
   }
-  
-  //////////////////////////
-
 }

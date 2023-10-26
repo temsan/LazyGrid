@@ -3,7 +3,9 @@ package com.example.application.controller;
 import com.example.application.data.entity.FileStorage;
 import com.example.application.data.entity.Products;
 import com.example.application.data.service.ProductsRepository;
+import com.example.application.util.Utils;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,34 +28,34 @@ public class PictureController {
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<InputStreamResource> getPicture(@PathVariable UUID productId) throws IOException {
+    public ResponseEntity<InputStreamResource> getPicture(@PathVariable UUID productId) {
         Optional<Products> productOptional = productsRepository.findById(productId);
 
-        if (productOptional.isPresent()) {
-            Products product = productOptional.get();
-            FileStorage preview = product.getPreview();
+        if (productOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            FileStorage preview = productOptional.get().getPreview();
 
             if (!preview.isEmpty()) {
                 byte[] imageData = preview.getData();
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(imageData);
 
-                String fileExtension = getFileExtension(preview.getName());
+                String fileExtension = Utils.getFileExtension(preview.getName());
                 MediaType mediaType = getMediaTypeFromExtension(fileExtension);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(mediaType);
+                headers.setContentDispositionFormData("attachment", preview.getName());
 
                 return ResponseEntity.ok()
                         .contentType(mediaType)
+                        .headers(headers)
                         .body(new InputStreamResource(inputStream));
+            } else {
+                // Если у продукта нет изображения, возвращаем HTTP-код 404 Not Found
+                return ResponseEntity.notFound().build();
             }
         }
-
-        return ResponseEntity.notFound().build();
-    }
-
-    private String getFileExtension(String fileName) {
-        if (fileName != null && fileName.lastIndexOf(".") != -1) {
-            return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-        }
-        return "";
     }
 
     private MediaType getMediaTypeFromExtension(String fileExtension) {
