@@ -1,16 +1,15 @@
 package com.example.application.views.products.event;
 
 import com.example.application.data.entity.Products;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEvent;
 import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 @Getter
-public class ProductEvent extends ComponentEvent<Component> {
-    private final Products item;
+public class ProductEvent extends ApplicationEvent {
+    private final Products product;
 
-    public ProductEvent(Component source, boolean fromClient, Products item) {
-        super(source, fromClient);
-        this.item = item;
+    public ProductEvent(Object source, Products product) {
+        super(source);
+        this.product = product;
     }
 }

@@ -33,13 +33,15 @@ import java.util.UUID;
 @PageTitle("PageProducts")
 public class PageProducts extends VerticalLayout {
     private final Binder<Products> binder = new Binder<>(Products.class);
-    private final Products model;
+    private final Products product;
     private final MemoryBuffer buffer = new MemoryBuffer();
     private final Upload imageUpload = new Upload(buffer);
     private final Image imagePreview;
 
-    public PageProducts(Dialog dialog, Products product, ProductsRepository service, ListProducts listProducts) {
-        this.model = product;
+    public PageProducts(Dialog dialog, UUID productId, ProductsRepository repository, ListProducts listProducts) {
+        product = repository.findById(productId).orElse(new Products());
+
+        binder.setBean(product);
         H3 title = new H3(product.getName());
 
         TextField id = new TextField("ID");
@@ -62,9 +64,9 @@ public class PageProducts extends VerticalLayout {
         update.addClickListener(event -> {
             try {
                 binder.writeBean(product);
-                service.save(product);
+                repository.save(product);
                 dialog.close();
-                listProducts.refreshAllGrids(model);
+                listProducts.refreshAllGrids(product);
             } catch (ValidationException e) {
                 Dialog errorDialog = new Dialog();
                 errorDialog.add(new Text("An error occurred. Please try again later."));
@@ -113,8 +115,8 @@ public class PageProducts extends VerticalLayout {
             ByteArrayOutputStream thumbnailStream = new ByteArrayOutputStream();
             String fileExtension = getFileExtension(fileName);
             ImageIO.write(thumbnail, fileExtension, thumbnailStream);
-            model.setImagePreview(thumbnailStream.toByteArray(), fileName);
-            model.setImage(imageData);
+            product.setImagePreview(thumbnailStream.toByteArray(), fileName);
+            product.setImage(imageData);
             updateImagePreview(thumbnailStream.toByteArray());
         } catch (IOException e) {
             Dialog errorDialog = new Dialog();

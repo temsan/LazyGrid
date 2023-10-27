@@ -12,6 +12,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.provider.DataChangeEvent;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
@@ -32,9 +33,13 @@ import java.util.UUID;
 public class ListProducts extends VerticalLayout implements DataUpdateListener {
 
     private final Grid<Products> grid;
+    private final DataUpdateManager<ListProducts> dataUpdateManager;
+
+    private void onDataChange(DataChangeEvent<Products> event) {
+    }
 
     public void refreshAllGrids(Products item) {
-        DataUpdateManager.notifyListeners();
+        dataUpdateManager.notifyListeners();
     }
 
     @Override
@@ -46,7 +51,9 @@ public class ListProducts extends VerticalLayout implements DataUpdateListener {
         grid.getDataProvider().refreshItem(item);
     }
 
-    public ListProducts(ProductsRepository service) {
+    public ListProducts(ProductsRepository service, DataUpdateManager<ListProducts> dataUpdateManager) {
+        this.dataUpdateManager = dataUpdateManager;
+
         setSizeFull();
 
         grid = getProductsGrid(service);
@@ -60,26 +67,26 @@ public class ListProducts extends VerticalLayout implements DataUpdateListener {
         })).setHeader("Preview Image").setKey("previewImage");
 
         grid.addItemClickListener(item -> {
-            openDialog(service, item.getItem(), this);
+            openDialog(service, item.getItem().getId(), this);
         });
 
         var add = new Button("ADD");
         add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         add.addClickListener(event -> {
-            openDialog(service, new Products(), this);
+            openDialog(service, new UUID(0L, 0L), this);
         });
 
         H3 title = new H3("PRODUCTS");
         add(title, add, grid);
 
-        DataUpdateManager.addListener(this); // Регистрируем этот экземпляр как подписчика
+        dataUpdateManager.addListener(this); // Регистрируем этот экземпляр как подписчика
     }
 
-    private static void openDialog(ProductsRepository service, Products model, ListProducts list) {
+    private static void openDialog(ProductsRepository service, UUID id, ListProducts list) {
         Dialog dialog = new Dialog();
         dialog.setWidth("500px");
         dialog.setHeight("600px");
-        dialog.add(new PageProducts(dialog, model, service, list));
+        dialog.add(new PageProducts(dialog, id, service, list));
         dialog.setCloseOnEsc(true);
         dialog.open();
     }
